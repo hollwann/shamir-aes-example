@@ -1,9 +1,10 @@
 #!/usr/bin/env -S npx tsx
 import * as crypto from 'crypto';
+import { ICipherService } from './interfaces/ICipherService';
 
-export class AESCipherService {
-	algorithm: string;
-	key: Buffer;
+export class AESCipherService implements ICipherService {
+	private readonly algorithm: string;
+	private readonly key: Buffer;
 
 	constructor(passphrase: string) {
 		this.algorithm = 'aes-256-cbc';

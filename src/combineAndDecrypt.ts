@@ -1,28 +1,27 @@
 #!/usr/bin/env -S npx tsx
 import { promises as fs } from 'fs';
-import * as path from 'path';
-import { AESCipherService } from './aes';
-import { ShamirSecretService } from './shamir';
+import { AppConfig } from './config/AppConfig';
+import { ServiceFactory } from './factory/ServiceFactory';
 
 async function combineAndDecrypt() {
     console.log("Starting share combination and decryption workflow...");
 
     // 1. Combine shares to reconstruct the encrypted data
-    const secretService = new ShamirSecretService();
+    const secretService = ServiceFactory.createShamirSecretService();
     await secretService.init();
-    const reconstructedBytes = await secretService.combineShares();
+    const reconstructedBytes = await secretService.combineShares(AppConfig.THRESHOLD);
     const reconstructedEncryptedData = new TextDecoder().decode(reconstructedBytes);
     console.log("Shares combined successfully.");
 
     // 2. Decrypt the reconstructed data
-    const cipherService = new AESCipherService('your-passphrase-here');
+    const cipherService = ServiceFactory.createCipherService();
     const decryptedData = cipherService.decrypt(reconstructedEncryptedData);
     console.log("Decryption successful.");
 
     // 3. Write the decrypted result to output file
-    const outputPath = path.join(__dirname, 'final_output.txt');
+    const outputPath = AppConfig.OUTPUT_FILE;
     await fs.writeFile(outputPath, decryptedData);
-    console.log("Decrypted content written to final_output.txt");
+    console.log(`Decrypted content written to ${outputPath}`);
 }
 
 combineAndDecrypt().catch(err => {

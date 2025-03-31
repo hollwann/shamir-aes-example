@@ -1,31 +1,34 @@
 #!/usr/bin/env -S npx tsx
 import { promises as fs } from 'fs';
-import * as path from 'path';
-import { AESCipherService } from './aes';
-import { ShamirSecretService } from './shamir';
+import { AppConfig } from './config/AppConfig';
+import { ServiceFactory } from './factory/ServiceFactory';
 
 async function encryptAndCreateShares() {
     console.log("Starting encryption and sharing workflow...");
 
     // 1. Read the input file
-    const inputPath = path.join(__dirname, 'input.txt');
+    const inputPath = AppConfig.INPUT_FILE;
     const inputData = await fs.readFile(inputPath);
     console.log("Input file read successfully.");
 
     // 2. Encrypt the content
-    const cipherService = new AESCipherService('your-passphrase-here');
+    const cipherService = ServiceFactory.createCipherService();
     const encryptedData = cipherService.encrypt(inputData);
     console.log("Content encrypted successfully.");
 
     // Save encrypted data for verification
-    const encryptedPath = path.join(__dirname, 'encrypted.txt');
+    const encryptedPath = AppConfig.ENCRYPTED_FILE;
     await fs.writeFile(encryptedPath, encryptedData);
-    console.log("Encrypted data saved to encrypted.txt");
+    console.log(`Encrypted data saved to ${encryptedPath}`);
 
     // 3. Create shares from encrypted data
-    const secretService = new ShamirSecretService();
+    const secretService = ServiceFactory.createShamirSecretService();
     await secretService.init();
-    const shares = await secretService.splitSecret(encryptedData);
+    const shares = await secretService.splitSecret(
+        encryptedData, 
+        AppConfig.TOTAL_SHARES, 
+        AppConfig.THRESHOLD
+    );
     
     // 4. Save the shares
     await secretService.saveShares(shares);
